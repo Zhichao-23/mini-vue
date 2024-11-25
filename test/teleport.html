@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<style>
+		#div {
+      position: absolute;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+	</style>
+	<body>
+		<div id="app"></div>
+		<script type="module">
+			import {
+				renderer,
+				onMounted,
+				onBeforeUpdate,
+				KeepAlive,
+				Text,
+        Teleport
+			} from "../renderer.js";
+			import { ref } from "../reactivity.js";
+			const compVnode = {
+				type: {
+					name: "comp",
+					components: {
+            Teleport
+          },
+					setup(props, {}) {
+						
+					},
+					render() {
+						return {
+							type: "div",
+							children: [
+								{
+                  type: this.Teleport,
+                  props: {
+                    to: "body"
+                  },
+                  children: [
+                    {
+                      type: "div",
+                      props: {
+                        id: "div"
+                      },
+                      children: "我是div"
+                    }
+                  ]
+                }
+								
+							],
+						};
+					},
+				},
+			};
+			renderer.render(compVnode, document.querySelector("#app"));
+
+		</script>
+	</body>
+</html>

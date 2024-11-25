@@ -6,10 +6,21 @@
 		<title>Document</title>
 	</head>
 	<body>
+		<div><button>button</button></div>
 		<div class="watched"></div>
-		<button>button</button>
-		<script src="../index.js"></script>
+		<script src="../reactivity.js"></script>
 		<script>
+
+			const comment = document.createComment('a');
+			comment.nodeValue = '123';
+			document.body.appendChild(comment);
+			console.dir(comment);
+
+			const text = document.createTextNode('a');
+			text.nodeValue = '123';
+			document.body.insertBefore(text, comment);
+			console.dir(text)
+
 			const watched = document.querySelector(".watched");
 			const btn = document.querySelector("button");
 			const obj = reactive({
@@ -17,9 +28,8 @@
 				data: [],
 			});
 
-			btn.addEventListener("click", () => {
+			btn.addEventListener("click", (e) => {
 				obj.count++;
-        console.log(obj.count);
 			});
 
 			effect(() => {
@@ -39,6 +49,10 @@
 				() => obj.count,
 				async (newVal, oldVal, onInvalidate) => {
 					let expired = false;
+					if (newVal === 3) {
+						btn.parentElement.innerHTML = '';
+						console.dir(btn);
+					}
 
 					onInvalidate(() => {
 						expired = true;

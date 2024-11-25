@@ -7,18 +7,20 @@
 	</head>
 	<body>
 		<div></div>
-		<script src="../index.js"></script>
-		<script>
+		
+		<script type="module">
+			import { watch, reactive, effect } from "../reactivity.js";
 			const warpper = document.querySelector("div");
 			const map = reactive(new Map());
 			effect(() => {
-        map.forEach((val, key) => {
-          console.log(val, key);
-        });
-      });
-      map.set(1, 1);
-      map.set(2, 2);
-      map.delete(1);
+				map.forEach((val, key) => {
+					console.log(val, key);
+				});
+			});
+			map.set(1, 1);
+			map.set(2, 2);
+			map.delete(1);
+			console.log("abc".indexOf("b"));
 		</script>
 	</body>
 </html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<div id="app"></div>
+		<script type="module">
+			import { renderer } from "../renderer.js";
+			const vnode1 = {
+				key: 1,
+				type: "p",
+				children: [
+					{
+						key: 2,
+						type: "button",
+						children: "button",
+						props: {
+							onClick: (e) => {
+								console.log(e);
+							},
+						},
+					},
+					{
+						key: 3,
+						type: "span",
+						children: "abc",
+					},
+					{
+						key: 4,
+						type: "p",
+						children: "bnm",
+					},
+					{
+						key: 5,
+						type: "div",
+						children: "div",
+					},
+				],
+			};
+
+			const vnode2 = {
+				key: 1,
+				type: "p",
+				children: [
+					{
+						key: 3,
+						type: "span",
+						children: "cba",
+					},
+					{
+						key: 4,
+						type: "span",
+						children: "qwe",
+					},
+					{
+						key: 2,
+						type: "button",
+						children: "btn",
+						props: {
+							disabled: false,
+							onClick: [
+								(e) => {
+									console.log("I am clicked!");
+								},
+								(e) => {
+									console.log(e);
+								},
+							],
+						},
+					},
+				],
+			};
+			renderer.render(vnode1, document.querySelector("#app"));
+			setTimeout(() => {
+				renderer.render(vnode2, document.querySelector("#app"));
+			}, 3000);
+		
+		</script>
+	</body>
+</html>

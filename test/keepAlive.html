@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<style>
+		.active {
+			background-color: darkcyan;
+		}
+	</style>
+	<body>
+		<div id="app"></div>
+		<script type="module">
+			import {
+				renderer,
+				onMounted,
+				onBeforeUpdate,
+				KeepAlive,
+				Text
+			} from "../renderer.js";
+			import { ref } from "../reactivity.js";
+			const compVnode = {
+				type: {
+					name: "comp",
+					components: {
+						subComp: {
+							setup() {
+								const count = ref(200);
+								return () => ({
+									type: "p",
+									children: `${count.value}`,
+									props: {
+										onClick: () => {
+											count.value += 100;
+										},
+									},
+								});
+							},
+						},
+						subComp1: {
+							render: () => ({
+								type: "p",
+								"children": "ppp"
+							})
+						},	
+					},
+					setup(props, {}) {
+						const text = ref(1);
+						const onClick = (e) => {
+							text.value = text.value * 10;
+						};
+
+						onMounted(() => {
+							console.log(document.querySelector("#app"));
+						});
+						onBeforeUpdate(() => {
+							console.log("aaa");
+						});
+						return {
+							text,
+							onClick,
+						};
+					},
+					render() {
+						return {
+							type: "div",
+							children: [
+								{
+									key: 1,
+									type: "h2",
+									children: `${this.text}`,
+								},
+								{
+									key: 2,
+									type: "button",
+									props: {
+										class: {
+											active: this.text > 10000,
+										},
+										onClick: this.onClick,
+									},
+									children: "button",
+								},
+								{
+									key: 3,
+									type: KeepAlive,
+									props: {
+										max: 2,
+									},
+									children: {
+										default: () => {
+											if (this.text <= 100 || this.text > 10000) {
+												return ({
+													key: 4,
+													type: this.subComp,
+												});
+											} else {
+												return {
+													key: 5,
+													type: this.subComp1
+												}
+											}
+										},
+									},
+								},
+							],
+						};
+					},
+				},
+			};
+			renderer.render(compVnode, document.querySelector("#app"));
+
+		</script>
+	</body>
+</html>

@@ -2,7 +2,7 @@ let activeEffect;
 let effectStack = [];
 let bucket = new WeakMap();
 
-function effect(fn, options = {}) {
+export function effect(fn, options = {}) {
 	const effectFn = () => {
 		cleanup(effectFn);
 		// 栈后入先出，我们让栈顶始终是将要被添加的依赖。只要我们让activeEffect始终是栈顶的元素，问题就ko了。
@@ -47,13 +47,11 @@ function track(target, key) {
 function trigger(target, key, type, newVal) {
 	const depsMap = bucket.get(target);
 	if (!depsMap) return;
+
 	const effects = depsMap.get(key);
 	const iterateEffects = depsMap.get(iterateKeys.get(target));
 	const mapIterateEffects = depsMap.get(mapIterateKeys.get(target));
-
-	// effectFn中进行了依赖清除，同时又重新收集了依赖。但是forEach仍然在继续，会产生无效循环。
-	// effects && effects.forEach(effectFn => effectFn())
-	// 我们创建一个副本，执行副本集合中副作用函数，函数修改的是原set的大小。
+	// 若直接指向桶中依赖，会造成无限循环。
 	const effectsToRun = new Set();
 
 	// 如果代理是数组，对于length删除元素，那么索引大于等于length的要触发响应。
@@ -73,7 +71,7 @@ function trigger(target, key, type, newVal) {
 		effects.forEach((effectFn) => {
 			if (effectFn !== activeEffect) effectsToRun.add(effectFn);
 		});
-	if (type === "ADD" || type === "DELLTE") {
+	if (type === "ADD" || type === "DELLETE") {
 		iterateEffects &&
 			iterateEffects.forEach((iterateEffect) => {
 				if (iterateEffect !== activeEffect) effectsToRun.add(iterateEffect);
@@ -95,29 +93,34 @@ function trigger(target, key, type, newVal) {
 	});
 }
 
-function computed(getter) {
+export function computed(getter) {
 	let value,
 		dirty = true;
-
 	const effectFn = effect(getter, {
 		lazy: true,
 		scheduler() {
-			if (!dirty) {
-				dirty = true;
-				trigger(obj, "value");
-			}
+			dirty = true;
+			// 手动触发trigger
+			trigger(obj, "value");
 		},
 	});
 
-	return {
+	const obj = {
 		get value() {
-			if (!dirty) return value;
-			value = effectFn();
+			// 不脏就不会触发依赖
+			if (dirty) {
+				value = effectFn();
+				dirty = false;
+			}
+			track(obj, "value");
+			return value;
 		},
 	};
+
+	return obj;
 }
 
-function wacth(source, cb, options = {}) {
+export function watch(source, cb, options = {}) {
 	let getter = null;
 	let oldVal, newVal;
 	// 在下一次执行回调时调用
@@ -153,6 +156,7 @@ function wacth(source, cb, options = {}) {
 	});
 	// 解决watch创建侦听同时是否触发一个回调
 	if (options.immediate) job();
+	// 因为视图上要展现响应式数据呀
 	else oldVal = effectFn();
 
 	function traverse(val, seen = new Set()) {
@@ -165,37 +169,23 @@ function wacth(source, cb, options = {}) {
 	}
 }
 
-const jobQueue = new Set();
-const p = Promise.resolve();
-let isFlushing = false;
-function flushJob() {
-	if (isFlushing) return;
-	isFlushing = true;
-	// 异步执行副作用函数，在执行之前对于属性同步的修改都已经执行完成。同时我们又使用了set去除了重复的副作用函数，
-	// 使得最后只执行了一次不同的副作用函数。
-	p.then(() => {
-		jobQueue.forEach((job) => job());
-	}).finally(() => {
-		isFlushing = false;
-	});
-}
-
-function reactive(obj) {
+export function reactive(obj) {
 	return createReactive(obj, false, false);
 }
-function shallowReactive(obj) {
+export function shallowReactive(obj) {
 	return createReactive(obj, true, false);
 }
-function readonly(obj) {
+export function readonly(obj) {
 	return createReactive(obj, false, true);
 }
-function shallowReactive(obj) {
+export function shallowReadonly(obj) {
 	return createReactive(obj, true, true);
 }
 
 let reactiveMap = new Map();
 let iterateKeys = new WeakMap();
 let mapIterateKeys = new WeakMap();
+
 function createReactive(obj, isShallow, isReadonly) {
 	const ITERATE_KEY = Symbol();
 
@@ -235,7 +225,9 @@ function createReactive(obj, isShallow, isReadonly) {
 			if (!isReadonly) track(target, key);
 
 			const res = Reflect.get(target, key);
+
 			if (isShallow) return res;
+
 			if (typeof res === "object" && res !== null) {
 				let reactiveObj = null;
 				if (reactiveMap.has(res)) reactiveObj = reactiveMap.get(res);
@@ -309,8 +301,8 @@ const arrayInstrumentations = {};
 });
 let shouldTrack = true;
 ["push", "shift", "pop", "unshift", "splice"].forEach((method) => {
-	const orignalMethod = tagrget[method];
-	arrayInstrumentations[key] = function (...args) {
+	const orignalMethod = Array.prototype[method];
+	arrayInstrumentations[method] = function (...args) {
 		shouldTrack = false;
 		const res = orignalMethod.apply(this, args);
 		shouldTrack = true;
@@ -434,39 +426,64 @@ const mutableInstrumentations = {
 /**
  * 非原始值的响应式
  */
-function ref(rawVal) {
+export function ref(rawVal) {
 	const wrapper = {
 		get value() {
 			return rawVal;
+		},
+		set value(newVal) {
+			rawVal = newVal;
 		},
 	};
 	Object.defineProperty(wrapper, "__v_isRef", {
 		value: true,
 	});
+	// 包裹一下可以实现深层代理
 	return reactive(wrapper);
 }
 
-function toRef(obj, key) {
+export function toRef(reactiveObj, key) {
 	const wrapper = {
 		get value() {
 			// 即使是原始数据类型也不会与原始的响应式对象断开联系
-			return obj[key];
+			return reactiveObj[key];
+		},
+		set value(newVal) {
+			reactiveObj[key] = newVal;
 		},
 	};
+	Object.defineProperty(reactiveObj, "__v_isRef", {
+		value: true,
+	});
 	return wrapper;
 }
 
-function toRefs(obj) {
+export function toRefs(reactiveObj) {
 	const wrapper = {};
-	for (let key in obj) {
-		wrapper[key] = toRef(obj, key);
+	for (let key in reactiveObj) {
+		wrapper[key] = toRef(reactiveObj, key);
 	}
 	return wrapper;
 }
 
-function proxyRefs() {
+export function shallowRef(rawVal) {
+	const wrapper = {
+		get value() {
+			return rawVal;
+		},
+		set value(newVal) {
+			rawVal = newVal;
+		},
+	};
+	Object.defineProperty(wrapper, "__v_isRef", {
+		value: true,
+	});
+	return shallowReactive(wrapper);
+}
+
+export function proxyRefs(target) {
 	return new Proxy(target, {
-		get(target, key) {
+		get(target, key, receiver) {
 			const value = Reflect.get(target, key, receiver);
 			return value.__v_isRef ? value.value : value;
 		},
