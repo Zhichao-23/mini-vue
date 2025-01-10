@@ -6,8 +6,22 @@
 		<title>Document</title>
 	</head>
 	<style>
-		.active {
-			background-color: darkcyan;
+		#div {
+			position: absolute;
+			inset: 0;
+			background-color: rgba(0, 0, 0, 0.4);
+		}
+		.v-enter-from,
+		.v-leave-to {
+			transform: translate(50px, 0);
+		}
+		.v-enter-to,
+		.v-leave-from {
+			transform: translate(0, 0);
+		}
+		.v-enter-active,
+		.v-leave-active {
+			transition: all 0.5s ease-in-out;
 		}
 	</style>
 	<body>
@@ -17,14 +31,15 @@
 				renderer,
 				onMounted,
 				onBeforeUpdate,
-				KeepAlive,
 				Text,
 			} from "../renderer.js";
 			import { ref } from "../reactivity.js";
+			import { Transition } from "../global-components.js";
 			const compVnode = {
 				type: {
 					name: "comp",
 					components: {
+						Transition,
 						subComp: {
 							setup() {
 								const count = ref(200);
@@ -39,68 +54,40 @@
 								});
 							},
 						},
-						subComp1: {
-							render: () => ({
-								type: "p",
-								children: "ppp",
-							}),
-						},
 					},
 					setup(props, {}) {
-						const text = ref(1);
-						const onClick = (e) => {
-							text.value = text.value * 10;
+						const count = ref(1);
+						const handleClick = (e) => {
+							count.value++;
 						};
-
-						onMounted(() => {
-							console.log(document.querySelector("#app"));
-						});
-						// onBeforeUpdate(() => {
-						// 	console.log("aaa");
-						// });
 						return {
-							text,
-							onClick,
+							count,
+							handleClick,
 						};
 					},
 					render() {
 						return {
 							type: "div",
+							props: {
+								onClick: this.handleClick,
+							},
 							children: [
 								{
-									key: 1,
-									type: "h2",
-									children: `${this.text}`,
-								},
-								{
-									key: 2,
-									type: "button",
+									type: this.Transition,
 									props: {
-										class: {
-											active: this.text > 10000,
-										},
-										onClick: this.onClick,
-									},
-									children: "button",
-								},
-								{
-									key: 3,
-									type: KeepAlive,
-									props: {
-										max: 2,
+										name: "v",
 									},
 									children: {
 										default: () => {
-											if (this.text <= 100 || this.text > 10000) {
+											if (this.count < 3) {
 												return {
-													key: 4,
-													type: this.subComp,
+													type: "button",
+													children: String(this.count),
 												};
 											} else {
 												return {
-													key: 5,
-													type: this.subComp1,
-												};
+                          type: this.subComp
+                        };
 											}
 										},
 									},
@@ -111,16 +98,6 @@
 				},
 			};
 			renderer.render(compVnode, document.querySelector("#app"));
-
-
-			const mo = new MutationObserver(() => {
-				console.log('mo');
-			})
-			mo.observe(document.querySelector("h2"), {
-				characterData: true
-			});
-
-			mo.disconnect()
 		</script>
 	</body>
 </html>

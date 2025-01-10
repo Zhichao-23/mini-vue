@@ -8,6 +8,8 @@ import {
 	shallowRef,
 } from "./reactivity.js";
 
+import nextFrame from "../utils/nextFrame.js";
+
 export const Text = Symbol();
 export const Comment = Symbol();
 export let currentInstance = null;
@@ -54,11 +56,12 @@ const createRenderer = (options) => {
 				patch,
 				patchChildren,
 				move(vnode, container, anchor) {
-					insert(vnode.component 
-						? vnode.component.subTree.el
-						: vnode.el, 
-						container, anchor);
-				}
+					insert(
+						vnode.component ? vnode.component.subTree.el : vnode.el,
+						container,
+						anchor
+					);
+				},
 			});
 		} else if (typeof type === "object" || typeof type === "function") {
 			if (!oldVnode) {
@@ -83,15 +86,13 @@ const createRenderer = (options) => {
 		const { type } = newVnode;
 		if (!oldVnode) {
 			let node =
-				type === Text
-					? createText(newVnode.children)
-					: createComment(newVnode.children);
+				type === Text ? createText(newChildren) : createComment(newChildren);
 			newVnode.el = node;
 			insert(node, container);
 		} else {
 			const el = (newVnode.el = oldVnode.el);
-			if (newVnode.children !== oldVnode.children) {
-				setText(el, newVnode.children);
+			if (newChildren !== oldChildren) {
+				setText(el, newChildren);
 			}
 		}
 	}
@@ -100,7 +101,7 @@ const createRenderer = (options) => {
 	 */
 	function patchFragment(newVnode, oldVnode, container) {
 		if (!oldVnode) {
-			newVnode.children.forEach((child) => {
+			newChildren.forEach((child) => {
 				patch(null, child, container);
 			});
 		} else {
@@ -130,7 +131,17 @@ const createRenderer = (options) => {
 				patchProps(el, key, props[key]);
 			}
 		}
+
+		// transition组件的逻辑
+		if (vnode.shouldTransition) {
+			vnode.transition.beforeEnter(el);
+		}
 		insert(el, container, anchor);
+		if (vnode.shouldTransition) {
+			nextFrame(() => {
+				vnode.transition.enter(el);
+			});
+		}
 	};
 	/**
 	 * 所有类型的vnode卸载逻辑都在这里
@@ -139,6 +150,7 @@ const createRenderer = (options) => {
 		if (vnode.type === "fragment") {
 			vnode.children.forEach((child) => {
 				unmount(child);
+
 				return;
 			});
 		} else if (typeof vnode.type === "object") {
@@ -151,9 +163,24 @@ const createRenderer = (options) => {
 			}
 			return;
 		}
+
+		// transition组件逻辑
 		const el = vnode.el;
-		const par = el.parentNode;
-		if (par) par.removeChild(el);
+		const parent = el.parentNode;
+		const shouldTransition = vnode.shouldTransition;
+		if (parent) {
+			const performRemove = (parent, child) => {
+				parent.remove(child);
+			};
+			if (shouldTransition) {
+				vnode.transition.beforeLeave(el);
+				nextFrame(() => {
+					vnode.transition.leave(el, performRemove);
+				});
+			} else {
+				performRemove(parent, el);
+			}
+		}
 	};
 	/**
 	 * 更新元素，包括更新props，class和children
@@ -167,7 +194,7 @@ const createRenderer = (options) => {
 		}
 		for (let key in oldProps) {
 			if (!(key in newProps)) {
-				patchProps(el, key, oldProps[key], null);
+				patchProps(el, key, undefined);
 			}
 		}
 		patchChildren(oldVnode, newVnode, el);
@@ -176,34 +203,33 @@ const createRenderer = (options) => {
 	 * 更新一个节点的子节点
 	 */
 	const patchChildren = (oldVnode, newVnode, container) => {
-		const patchTextChildren = (oldVnode, newVnode, container) => {
-			if (Array.isArray(oldVnode.children)) {
-				oldVnode.children.forEach((child) => unmount(child, container));
+		const oldChildren = oldVnode.children;
+		const newChildren = newVnode.children;
+		const patchTextChildren = (oldChildren, newChildren, container) => {
+			if (Array.isArray(oldChildren)) {
+				oldChildren.forEach((child) => unmount(child, container));
 			}
-			setElementText(container, newVnode.children);
+			setElementText(container, newChildren);
 		};
 
-		const patchGroupChildren = (oldVnode, newVnode, container) => {
-			const oldChilren = oldVnode.children;
-			const newChildren = newVnode.children;
-			quickDiff(oldChilren, newChildren, container);
+		const patchGroupChildren = (oldChildren, newChildren, container) => {
+			quickDiff(oldChildren, newChildren, container);
 		};
 
-		const unmountChildren = (oldVnode, container) => {
-			if (Array.isArray(oldVnode.children)) {
-				oldVnode.children.forEach((child) => unmount(child, container));
-			} else if (typeof oldVnode.children === "string") {
+		const unmountChildren = (oldChildren, container) => {
+			if (Array.isArray(oldChildren)) {
+				oldChildren.forEach((child) => unmount(child, container));
+			} else if (typeof oldChildren === "string") {
 				setElementText(el, "");
 			}
 		};
-	
 
-		if (typeof newVnode.children === "string") {
-			patchTextChildren(oldVnode, newVnode, container);
-		} else if (Array.isArray(newVnode.children)) {
-			patchGroupChildren(oldVnode, newVnode, container);
+		if (typeof newChildren === "string") {
+			patchTextChildren(oldChildren, newChildren, container);
+		} else if (Array.isArray(newChildren)) {
+			patchGroupChildren(oldChildren, newChildren, container);
 		} else {
-			unmountChildren(oldVnode, container);
+			unmountChildren(oldChildren, container);
 		}
 	};
 
@@ -248,7 +274,7 @@ const createRenderer = (options) => {
 			const oldChild = oldChilren[i];
 			let find = false;
 			for (let j = 0; j < newChildren.length; j++) {
-				const newChild = newVnode.children[j];
+				const newChild = newChildren[j];
 				if (oldChild.key === newChild.key) {
 					find = true;
 				}
@@ -451,7 +477,6 @@ const createRenderer = (options) => {
 		};
 	};
 
-	
 	const taskQueue = new Set();
 	let isFlushing = false;
 	const p = Promise.resolve();
@@ -814,88 +839,67 @@ export const onUnmounted = (fn) => {
 	currentInstance.unmounted.push(fn);
 };
 
-export const defineAysncComponent = (options) => {
+export const defineAysncComponent = ({
+	loader,
+	errorComponent = null,
+	delay = 0,
+	timeout = 3000,
+	reloadTimes = Infinity,
+	loadingComponent = null,
+	placeholder = "Loading...",
+} = {}) => {
 	/**
 	 * 整个过程：
 	 * 完成（包括了成功和失败）PK loading		==>		成功 PK 失败（延迟造成失败 | 加载失败）
 	 */
-	if (typeof options === "function") {
-		options = {
-			loader: options,
-		};
-	}
+	if (!loader) return null;
 	let InnerComp = null;
 	return {
 		name: "AsyncComponentWrapper",
 		setup() {
-			const loaded = ref(false);
-			const error = shallowRef(false);
-			const loading = ref(false);
+			const isLoading = ref(false);
+			let loadingTimer = setTimeout(() => {
+				isLoading.value = true;
+				clearTimeout(loadingTimer);
+			}, delay);
 
-			let loadingTimer = null;
-			if (options.delay) {
-				loadingTimer = setTimeout(() => {
-					loading.value = true;
-				}, options.delay);
-			} else {
-				loading.value = true;
-			}
-			// 实现组件缓存
-			const { loader } = options;
-			let reloadTimes = 0;
+			let hasReloadedTimes = 0;
+			let err = ref(false);
 			const load = () => {
 				loader()
-					.then((c) => {
-						InnerComp = c;
-						loaded.value = true;
+					.then((val) => {
+						InnerComp = val;
 					})
-					.catch((err) => {
-						error.value = err;
-						reloadTimes++;
-						if (reloadTimes < options.reloadTimes) {
-							load();
+					.catch(() => {
+						if (hasReloadedTimes >= reloadTimes) {
+							isLoading.value = false;
+							err.value = true;
+							return;
 						}
-					})
-					.finally(() => {
-						loading.value = false;
-						clearTimeout(timer);
-						clearTimeout(loadingTimer);
+						load();
+						hasReloadedTimes++;
 					});
 			};
-			if (!InnerComp) {
-				load();
-			} else {
-				loaded.value = true;
-			}
-
-			let timer = null;
-			if (options.timeout) {
-				timer = setTimeout(() => {
-					const err = new Error(
-						`Aycn component timed out after ${options.timeout}ms`
-					);
-					error.value = err;
-				}, options.timeout);
-			}
-
-			const placeHolder = {
-				type: Text,
-				children: "",
-			};
+			let timeoutTimer = setTimeout(() => {
+				isLoading.value = false;
+				InnerComp = errorComponent;
+				clearTimeout(timeoutTimer);
+			}, timeout);
+			load();
 
 			return () => {
-				if (loaded.value) {
-					return { type: InnerComp };
-				} else if (error.value && options.errorComponent) {
-					return {
-						type: options.errorComponent,
-						props: { error: error.value },
-					};
-				} else if (loading.value && options.loadingComponent) {
-					return { type: options.loadingComponent };
-				} else {
-					return placeHolder;
+				if (isLoading.value) {
+					return loadingComponent;
 				}
+				if (InnerComp) {
+					return {
+						tyep: InnerComp,
+					};
+				}
+				if (err.value) {
+					return errorComponent;
+				}
+				return { type: "span", children: placeholder };
 			};
 		},
 	};
@@ -945,7 +949,13 @@ export const KeepAlive = {
 		const { max } = props;
 		let cachedCnt = 0;
 		return () => {
-			const rawVnode = slots.default();
+			let rawVnode = slots.default();
+			if (Array.isArray(rawVnode)) {
+				rawVnode = {
+					type: "fragment",
+					children: [rawVnode],
+				};
+			}
 			if (
 				typeof rawVnode.type !== "object" &&
 				typeof rawVnode.type !== "function"
@@ -977,7 +987,6 @@ export const KeepAlive = {
 					const deletedKey = cache.keys().next().value;
 					cache.delete(deletedKey);
 					cache.set(rawVnode.type, rawVnode);
-					console.log(cachedCnt);
 				} else {
 					cache.set(rawVnode.type, rawVnode);
 					cachedCnt++;
@@ -986,34 +995,4 @@ export const KeepAlive = {
 			return rawVnode;
 		};
 	},
-};
-
-export const Teleport = {
-	name: "teleport",
-	_isTeleport: true,
-	process(oldVnode, newVnode, options) {
-		const {
-			patch,
-			patchChildren,
-			move
-		} = options;
-
-		const to = 
-			typeof newVnode.props.to === "string" 
-			? document.querySelector(newVnode.props.to)
-			: newVnode.props.to;
-		const children = newVnode.children;
-		if (!oldVnode) {
-			children.forEach(child => {
-				patch(null, child, to, null);
-			});
-		} else {
-			patchChildren(oldVnode.children, newVnode.children, );
-			if (to !== oldVnode.props.to) {
-				children.forEach(child => {
-					move(child, to);
-				}); 
-			}
-		}
-	}
 };

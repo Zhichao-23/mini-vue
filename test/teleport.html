@@ -19,11 +19,10 @@
 				renderer,
 				onMounted,
 				onBeforeUpdate,
-				KeepAlive,
 				Text,
-        Teleport
 			} from "../renderer.js";
 			import { ref } from "../reactivity.js";
+			import { Teleport } from "../global-components.js";
 			const compVnode = {
 				type: {
 					name: "comp",
