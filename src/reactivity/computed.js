@@ -1,4 +1,4 @@
-import { effect, trigger, track } from "./effect";
+import { effect, trigger, track } from "./effect.js";
 export function computed(getter) {
   let value,
     dirty = true;

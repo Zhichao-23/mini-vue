@@ -1,4 +1,4 @@
-import { toRef } from "./toRef";
+import { toRef } from "./toRef.js";
 
 export function toRefs(reactiveObj) {
 	const wrapper = {};

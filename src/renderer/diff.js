@@ -1,6 +1,6 @@
-import { insert } from "./DOMOps";
-import { patch } from "./patch";
-import { unmount } from "./unmount";
+import { insert } from "./DOMOps.js";
+import { patch } from "./patch.js";
+import { unmount } from "./unmount.js";
 
 const simpleDiff = (oldChilren, newChildren, container) => {
 	let lastIndex = 0;

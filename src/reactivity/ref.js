@@ -1,4 +1,4 @@
-import { reactive } from "./reactive";
+import { reactive } from "./reactive.js";
 /**
  * 非原始值的响应式
  */

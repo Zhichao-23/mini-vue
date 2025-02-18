@@ -14,13 +14,12 @@
 		<div id="app"></div>
 		<script type="module">
 			import {
-				renderer,
-				onMounted,
-				onBeforeUpdate,
-				KeepAlive,
-				Text,
-			} from "../renderer.js";
-			import { ref } from "../reactivity.js";
+				renderer
+			} from "../src/renderer/renderer.js";
+
+			import { ref } from "../src/reactivity";
+			import {onMounted} from "../src/renderer/lifeCycle.js";
+			import {KeepAlive} from "../src/globalComponents/KeepAlive.js";
 			const compVnode = {
 				type: {
 					name: "comp",
@@ -120,7 +119,6 @@
 				characterData: true
 			});
 
-			mo.disconnect()
 		</script>
 	</body>
 </html>

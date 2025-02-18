@@ -1,4 +1,4 @@
-import { iterateKeys, mapIterateKeys, track, trigger } from "./effect";
+import { iterateKeys, mapIterateKeys, track, trigger } from "./effect.js";
 let reactiveMap = new Map();
 
 

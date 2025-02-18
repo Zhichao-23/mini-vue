@@ -1,4 +1,4 @@
-import nextFrame from "../../utils/nextFrame";
+import { nextFrame } from "../../utils/nextFrame.js";
 
 /**
  * 所有类型的vnode卸载逻辑都在这里

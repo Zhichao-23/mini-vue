@@ -1,5 +1,6 @@
-import { nextFrame } from "../../utils/nextFrame";
-import { createElement, insert, patchProps, setElementText } from "./DOMOps";
+import { nextFrame } from "../../utils/nextFrame.js";
+import { createElement, insert, patchProps, setElementText } from "./DOMOps.js";
+import {patch} from "./patch.js";
 /**
  * 挂载元素
  */
@@ -12,7 +13,7 @@ export function mountElement(vnode, container, anchor) {
 			setElementText(el, children);
 		} else if (Array.isArray(children)) {
 			for (let child of children) {
-				mountElement(child, el, null);
+				patch(null, child, el, null);
 			}
 		}
 	}

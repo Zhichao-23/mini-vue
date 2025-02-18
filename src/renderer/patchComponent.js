@@ -1,4 +1,4 @@
-import { resolveProps } from "./resolveProps";
+import { resolveProps } from "./resolveProps.js";
 
 /**
  * 更新组件

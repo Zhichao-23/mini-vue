@@ -1,4 +1,4 @@
-import { currentInstance } from "./mountComponents";
+import { currentInstance } from "./mountComponent.js";
 
 export const onCreated = (fn) => {
 	currentInstance.created.push(fn);

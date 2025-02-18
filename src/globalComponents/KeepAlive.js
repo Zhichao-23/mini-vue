@@ -1,4 +1,4 @@
-import { currentInstance } from "../renderer/mountComponents";
+import { currentInstance } from "../renderer/mountComponent.js";
 
 export const KeepAlive = {
 	name: "keep-alive",

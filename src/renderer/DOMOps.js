@@ -15,15 +15,13 @@ function setElementText(el, children) {
 	return (el.textContent = children);
 }
 function createText(text) {
-	const textNode = document.createTextNode(text);
-	return textNode;
+	return document.createTextNode(text);
 }
 function setText(el, newNodeValue) {
 	el.nodeValue = newNodeValue;
 }
 function createComment(comment) {
-	const commentNode = document.createComment(comment);
-	return commentNode;
+	return document.createComment(comment);
 }
 function insert(el, container, anchor = null) {
 	container.insertBefore(el, anchor);
@@ -66,28 +64,27 @@ const _patchEvent = (el, key, nextValue) => {
 };
 
 const _patchClass = (el, nextValue) => {
-	let className = normalizeClass(nextValue);
-	el.className = className;
-	function normalizeClass(classObj) {
-		if (typeof classObj === "string") {
-			return classObj;
-		} else if (typeof classObj === "object") {
-			let className = "";
-			if (Array.isArray(classObj)) {
-				for (let name of classObj) {
-					className += " " + normalizeClass(name);
-				}
-			} else {
-				for (let name in classObj) {
-					if (classObj[name]) {
-						className += " " + name;
-					}
+	el.className = _normalizeClass(nextValue);
+};
+const _normalizeClass = (classObj) => {
+	if (typeof classObj === "string") {
+		return classObj;
+	} else if (typeof classObj === "object") {
+		let className = "";
+		if (Array.isArray(classObj)) {
+			for (let name of classObj) {
+				className += " " + normalizeClass(name);
+			}
+		} else {
+			for (let name in classObj) {
+				if (classObj[name]) {
+					className += " " + name;
 				}
 			}
-			return className.trimStart();
 		}
+		return className.trimStart();
 	}
-};
+}
 const _formElements = ["input", "select", "button"];
 const _patchOtherProps = (el, key, nextValue) => {
 	const type = typeof el[key];

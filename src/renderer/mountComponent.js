@@ -1,13 +1,13 @@
-import { effect } from "../reactivity/effect";
-import { proxyRefs } from "../reactivity/proxyRefs";
+import { effect } from "../reactivity";
+import { proxyRefs } from "../reactivity";
 import {
 	reactive,
 	shallowReactive,
 	shallowReadonly,
-} from "../reactivity/reactive";
-import { createElement, insert } from "./DOMOps";
-import { patch } from "./patch";
-import { resolveProps } from "./resolveProps";
+} from "../reactivity";
+import { createElement, insert } from "./DOMOps.js";
+import { patch } from "./patch.js";
+import { resolveProps } from "./resolveProps.js";
 
 /**
  * 挂载组件

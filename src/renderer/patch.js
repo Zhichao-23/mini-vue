@@ -2,15 +2,16 @@ import {
 	createComment,
 	createText,
 	insert,
-	patchProps,
 	setText,
-} from "./DOMOps";
-import { mountComponent } from "./mountComponents";
-import { mountElement } from "./mountElement";
-import { patchComponent } from "./patchComponent";
-import { patchChildren, patchElement } from "./patchElement";
-import { unmount } from "./unmount";
+} from "./DOMOps.js";
+import { mountComponent } from "./mountComponent.js";
+import { mountElement } from "./mountElement.js";
+import { patchComponent } from "./patchComponent.js";
+import { patchChildren, patchElement } from "./patchElement.js";
+import { unmount } from "./unmount.js";
 
+export const Text = Symbol();
+export const Comment = Symbol();
 /**
  * 中转站，根据vnode的type类型，进行分类
  * 然后根据oldVnode是否存在，决定挂载还是更新，不做卸载的逻辑。

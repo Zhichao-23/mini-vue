@@ -1,10 +1,7 @@
 import { patch } from "./patch.js";
 import { unmount } from "./unmount.js";
 
-export const Text = Symbol();
-export const Comment = Symbol();
-
-const createRenderer = (options) => {
+const createRenderer = () => {
 	const render = (vnode, container) => {
 		if (vnode) {
 			patch(container._vnode, vnode, container);
@@ -19,7 +16,7 @@ const createRenderer = (options) => {
 	};
 };
 
-export const renderer = createRenderer({});
+export const renderer = createRenderer();
 
 const load = (fetch, onError) => {
 	return new Promise((resolve, reject) => {

@@ -1,4 +1,4 @@
-import { shouldTrack } from "./reactive";
+import { shouldTrack } from "./reactive.js";
 
 let activeEffect;
 let effectStack = [];

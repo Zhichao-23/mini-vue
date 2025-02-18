@@ -1,6 +1,6 @@
-import { quickDiff } from "./diff";
-import { patchProps, setElementText } from "./DOMOps";
-import { unmount } from "./unmount";
+import { quickDiff } from "./diff.js";
+import { patchProps, setElementText } from "./DOMOps.js";
+import { unmount } from "./unmount.js";
 
 /**
  * 更新元素，包括更新props，class和children

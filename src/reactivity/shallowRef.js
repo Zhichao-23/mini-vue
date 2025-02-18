@@ -1,4 +1,4 @@
-import { shallowReactive } from "./reactive";
+import { shallowReactive } from "./reactive.js";
 
 export function shallowRef(rawVal) {
 	const wrapper = {

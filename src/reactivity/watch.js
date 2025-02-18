@@ -1,4 +1,4 @@
-import { effect } from "./effect";
+import { effect } from "./effect.js";
 
 export function watch(source, cb, options = {}) {
   let getter = null;
