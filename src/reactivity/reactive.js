@@ -34,8 +34,8 @@ function createReactive(obj, isShallow, isReadonly) {
 		get(target, key) {
 			if (key === "raw") return target;
 
-			if (
-				Array.isArray(target) &&
+			// 访问数组的查找和修改方法
+			if (Array.isArray(target) &&
 				Object.prototype.hasOwnProperty.call(arrayInstrumentations, key)
 			) {
 				return arrayInstrumentations[key];
@@ -45,10 +45,7 @@ function createReactive(obj, isShallow, isReadonly) {
 				if (key === "size") {
 					return Reflect.get(target, key, target);
 				}
-
-				if (
-					Object.prototype.hasOwnProperty.call(mutableInstrumentations, key)
-				) {
+				if (Object.prototype.hasOwnProperty.call(mutableInstrumentations, key)) {
 					return mutableInstrumentations[key];
 				}
 			}
@@ -57,8 +54,9 @@ function createReactive(obj, isShallow, isReadonly) {
 
 			const res = Reflect.get(target, key);
 
+			// 若是浅响应的对象，直接返回原对象
 			if (isShallow) return res;
-
+			// 若不是浅响应，需要用reactive包裹
 			if (typeof res === "object" && res !== null) {
 				let reactiveObj = null;
 				if (reactiveMap.has(res)) reactiveObj = reactiveMap.get(res);
@@ -125,7 +123,7 @@ const arrayInstrumentations = {};
 		const originMethod = Array.prototype[method];
 		let res = originMethod.apply(this, args);
 		if (res === false || res === -1) {
-			res = originMethod.apply(this.raw);
+			res = originMethod.apply(this.raw, args);
 		}
 		return res;
 	};
@@ -140,6 +138,7 @@ const arrayInstrumentations = {};
 		return res;
 	};
 });
+
 const wrap = (val) => (typeof val === "object" ? reactive(val) : val);
 
 // 重写map和set的方法

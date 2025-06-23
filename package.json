@@ -1,3 +1,6 @@
 {
-  "name": "mini-vue"
+  "name": "mini-vue",
+  "devDependencies": {
+    "vitest": "^3.0.8"
+  }
 }

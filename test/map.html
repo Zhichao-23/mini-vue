@@ -9,7 +9,7 @@
 		<div></div>
 		
 		<script type="module">
-			import { watch, reactive, effect } from "../reactivity.js";
+			import { watch, reactive, effect } from "../src/reactivity/index.js";
 			const warpper = document.querySelector("div");
 			const map = reactive(new Map());
 			effect(() => {
@@ -20,7 +20,19 @@
 			map.set(1, 1);
 			map.set(2, 2);
 			map.delete(1);
-			console.log("abc".indexOf("b"));
+
+			for (const [key, val] of map) {
+				console.log(key, val);
+			}
+
+			for (const key of map.keys()) {
+				console.log(key);
+			}
+
+			for (const val of map.values()) {
+				console.log(val);
+			}
+
 		</script>
 	</body>
 </html>

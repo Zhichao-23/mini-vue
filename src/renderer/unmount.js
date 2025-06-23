@@ -7,7 +7,6 @@ export function unmount(vnode) {
 	if (vnode.type === "fragment") {
 		vnode.children.forEach((child) => {
 			unmount(child);
-
 			return;
 		});
 	} else if (typeof vnode.type === "object") {
@@ -19,6 +18,8 @@ export function unmount(vnode) {
 			unmount(vnode.component.subTree);
 		}
 		return;
+	} else {	// 普通元素节点
+		vnode.el.remove();
 	}
 
 	// transition组件逻辑

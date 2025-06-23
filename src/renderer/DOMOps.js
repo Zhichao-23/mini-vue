@@ -73,7 +73,7 @@ const _normalizeClass = (classObj) => {
 		let className = "";
 		if (Array.isArray(classObj)) {
 			for (let name of classObj) {
-				className += " " + normalizeClass(name);
+				className += " " + _normalizeClass(name);
 			}
 		} else {
 			for (let name in classObj) {

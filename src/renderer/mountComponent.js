@@ -103,7 +103,7 @@ export function mountComponent(vnode, container, anchor) {
 	// 可自动脱ref
 	const renderContext = proxyRefs(
 		new Proxy(instance, {
-			get(target, key, receiver) {
+			get(target, key) {
 				const { state, props, slots, components } = target;
 				if (props && key in props) {
 					return props[key];

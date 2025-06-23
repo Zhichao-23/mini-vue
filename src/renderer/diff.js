@@ -136,9 +136,9 @@ export function quickDiff(oldChilren, newChildren, container) {
 		oldEnd--;
 		newEnd--;
 	}
+
 	let newStart = j,
 		oldStart = j;
-
 	if (newStart <= newEnd && oldStart > oldEnd) {
 		// 中间都是新节点
 		const anchor = newChildren[newEnd + 1].el || null;
@@ -158,7 +158,7 @@ export function quickDiff(oldChilren, newChildren, container) {
 		// 遍历旧节点，建立source(新节点对应的旧节点的索引)
 		const source = new Array(newEnd - newStart + 1);
 		let moved = false; // 判断时候有节点需要移动
-		let lastIndex = oldStart;
+		let lastIndex = newStart;
 		source.fill(-1);
 		for (let i = oldStart; i <= oldEnd; i++) {
 			const oldChild = oldChilren[i];
@@ -168,10 +168,11 @@ export function quickDiff(oldChilren, newChildren, container) {
 				patch(oldChild, newChild, container, null);
 				source[keyIndexMap[key] - newStart] = i;
 
-				if (i < lastIndex) {
+				const newChildIndex = keyIndexMap[key];
+				if (newChildIndex < lastIndex) {
 					moved = true;
 				} else {
-					lastIndex = i;
+					lastIndex = newChildIndex;
 				}
 			} else {
 				unmount(oldChild);
@@ -182,17 +183,14 @@ export function quickDiff(oldChilren, newChildren, container) {
 			const seq = _getLis(source);
 			let k = seq.length - 1;
 			for (let i = source.length - 1; i >= 0; i--) {
+				const pos = i + newStart;
+				const newChild = newChildren[pos];
+				const anchor = newChildren[pos + 1] || null;
 				if (source[i] === -1) {
-					const pos = i + newStart;
-					const newChild = newChildren[pos];
-					const anchor = newChildren[pos + 1] || null;
 					patch(null, newChild, container, anchor);
-				} else if (i === k) {
+				} else if (i === seq[k]) {
 					k--;
 				} else {
-					const pos = i + newStart;
-					const newChild = newChildren[pos];
-					const anchor = newChildren[pos + 1] || null;
 					insert(newChild, container, anchor);
 				}
 			}
